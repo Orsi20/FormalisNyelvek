@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\problems\sum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\problems\dfa.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4AC6035E-5E2D-3F6C-8785-FD1EF7173A4C}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

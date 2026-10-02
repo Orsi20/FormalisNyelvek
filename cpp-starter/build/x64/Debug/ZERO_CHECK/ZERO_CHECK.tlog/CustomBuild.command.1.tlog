@@ -1,0 +1,10 @@
+^C:\USERS\ORSI\SAPI\3EV\FORMALIS_NYELVEK\FORMALISNYELVEK\CPP-STARTER\BUILD\CMAKEFILES\E9258EC557F4D0DD348EEA764D8CD746\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/Orsi/Sapi/3ev/Formalis_nyelvek/FormalisNyelvek/cpp-starter -BC:/Users/Orsi/Sapi/3ev/Formalis_nyelvek/FormalisNyelvek/cpp-starter/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/Orsi/Sapi/3ev/Formalis_nyelvek/FormalisNyelvek/cpp-starter/build/project.slnx
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

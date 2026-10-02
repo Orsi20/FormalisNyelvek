@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\build\CMakeFiles\e9258ec557f4d0dd348eea764d8cd746\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{99411E46-81D0-3879-9DA7-4959B4C0E2A3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
