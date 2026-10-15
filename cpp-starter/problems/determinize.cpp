@@ -1,32 +1,20 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <string>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <vector>
 #include <set>
 #include <map>
-#include <queue>
 #include <algorithm>
+#include <tuple>
 
 #include "determinize.hpp"
 
 using namespace std;
 
-struct Transition {
-    int from;
-    string symbol;
-    int to;
-
-    bool operator<(const Transition &other) const {
-        if (from != other.from) return from < other.from;
-        if (symbol != other.symbol) return symbol < other.symbol;
-        return to < other.to;
-    }
-};
-
 void DeterminizeProblem::initialize_parser(cxxopts::Options &options) {
     options.add_options()
-        ("det", "Determinize the input automaton");
+        ("det", "Determinize the automaton");
 }
 
 bool DeterminizeProblem::is_chosen_problem(const cxxopts::ParseResult &args) {
@@ -34,183 +22,235 @@ bool DeterminizeProblem::is_chosen_problem(const cxxopts::ParseResult &args) {
 }
 
 int DeterminizeProblem::run(const cxxopts::ParseResult &args) {
-    if (args.count("input") == 0 || args.count("output") == 0) {
-        cerr << "Hiba: Hiányzó parancssori argumentumok!" << endl;
-        return 1;
-    }
-
     string inputFilename = args["input"].as<string>();
     string outputFilename = args["output"].as<string>();
 
     ifstream inputFile(inputFilename);
+
     if (!inputFile) {
-        cerr << "Hiba a bemeneti fajl megnyitasakor: " << inputFilename << endl;
+        cerr << "Error opening input file: " << inputFilename << endl;
         return 1;
     }
 
     string line;
-
-    if (!getline(inputFile, line)) {
-        cerr << "Hiba a bemeneti fajl olvasasakor!" << endl;
-        return 1;
-    }
-    stringstream ss1(line);
-    set<string> valid_states;
-    string token;
-    while (ss1 >> token) {
-        valid_states.insert(token);
-    }
-
-    if (!getline(inputFile, line)) {
-        cerr << "Hiba az abece olvasasakor!" << endl;
-        return 1;
-    }
-    stringstream ss2(line);
+    vector<string> states;
     vector<string> alphabet;
-    set<string> valid_symbols;
-    while (ss2 >> token) {
-        alphabet.push_back(token);
-        valid_symbols.insert(token);
+    string startState;
+    set<string> finalStates;
+
+    if (!getline(inputFile, line)) {
+        cerr << "Invalid input file" << endl;
+        return 1;
+    }
+
+    {
+        istringstream row(line);
+        string state;
+
+        while (row >> state) {
+            states.push_back(state);
+        }
     }
 
     if (!getline(inputFile, line)) {
-        cerr << "Hiba a kezdoallapot olvasasakor!" << endl;
+        cerr << "Invalid input file" << endl;
         return 1;
     }
-    stringstream ss3(line);
-    string start_state;
-    ss3 >> start_state;
-    if (valid_states.find(start_state) == valid_states.end()) {
-        cerr << "Ervenytelen kezdoallapot: " << start_state << endl;
+
+    {
+        istringstream row(line);
+        string symbol;
+
+        while (row >> symbol) {
+            alphabet.push_back(symbol);
+        }
+    }
+
+    if (!getline(inputFile, startState)) {
+        cerr << "Invalid input file" << endl;
         return 1;
     }
+
+    startState.erase(0, startState.find_first_not_of(" \t\r\n"));
+
+    if (startState.empty()) {
+        cerr << "Invalid start state" << endl;
+        return 1;
+    }
+
+    startState.erase(startState.find_last_not_of(" \t\r\n") + 1);
 
     if (!getline(inputFile, line)) {
-        cerr << "Hiba a vegallapotok olvasasakor!" << endl;
+        cerr << "Invalid input file" << endl;
         return 1;
     }
-    stringstream ss4(line);
-    set<string> nfa_final_states;
-    while (ss4 >> token) {
-        if (valid_states.find(token) == valid_states.end()) {
-            cerr << "Ervenytelen vegallapot: " << token << endl;
-            return 1;
+
+    {
+        istringstream row(line);
+        string state;
+
+        while (row >> state) {
+            finalStates.insert(state);
         }
-        nfa_final_states.insert(token);
     }
 
-    map<pair<string, string>, set<string>> nfa_transitions;
+    set<string> validStates(states.begin(), states.end());
+    set<string> validAlphabet(alphabet.begin(), alphabet.end());
 
-    while (getline(inputFile, line)) {
-        if (line.empty()) continue;
-        stringstream ss(line);
-        string from, sym, to;
-        if (!(ss >> from >> sym >> to)) {
-            continue;
-        }
-
-        if (valid_states.find(from) == valid_states.end()) {
-            cerr << "Ervenytelen forras allapot: " << from << endl;
-            return 1;
-        }
-        if (valid_symbols.find(sym) == valid_symbols.end()) {
-            cerr << "Ervenytelen szimbolum: " << sym << endl;
-            return 1;
-        }
-        if (valid_states.find(to) == valid_states.end()) {
-            cerr << "Ervenytelen cel allapot: " << to << endl;
-            return 1;
-        }
-
-        nfa_transitions[{from, sym}].insert(to);
+    if (validStates.size() != states.size()) {
+        cerr << "Duplicate state" << endl;
+        return 1;
     }
 
-    vector<set<string>> dfa_subsets;
-    map<set<string>, int> subset_map;
-    queue<int> worklist;
-    vector<Transition> dfa_transitions;
+    if (validAlphabet.size() != alphabet.size()) {
+        cerr << "Duplicate alphabet symbol" << endl;
+        return 1;
+    }
 
-    set<string> initial_set = { start_state };
-    dfa_subsets.push_back(initial_set);
-    subset_map[initial_set] = 0;
-    worklist.push(0);
+    if (validStates.find(startState) == validStates.end()) {
+        cerr << "Invalid start state: " << startState << endl;
+        return 1;
+    }
 
-    while (!worklist.empty()) {
-        int current_idx = worklist.front();
-        worklist.pop();
+    for (const string &state : finalStates) {
+        if (validStates.find(state) == validStates.end()) {
+            cerr << "Invalid final state: " << state << endl;
+            return 1;
+        }
+    }
 
-        const auto &current_set = dfa_subsets[current_idx];
+    sort(alphabet.begin(), alphabet.end());
 
-        for (const auto &sym : alphabet) {
-            set<string> next_set;
+    map<pair<string, string>, set<string>> transitions;
 
-            for (const auto &state : current_set) {
-                auto it = nfa_transitions.find({state, sym});
-                if (it != nfa_transitions.end()) {
-                    for (const auto &target : it->second) {
-                        next_set.insert(target);
-                    }
+    string from, symbol, to;
+
+    while (inputFile >> from >> symbol >> to) {
+        if (validStates.find(from) == validStates.end()) {
+            cerr << "Invalid transition state: " << from << endl;
+            return 1;
+        }
+
+        if (validStates.find(to) == validStates.end()) {
+            cerr << "Invalid transition state: " << to << endl;
+            return 1;
+        }
+
+        if (validAlphabet.find(symbol) == validAlphabet.end()) {
+            cerr << "Invalid transition symbol: " << symbol << endl;
+            return 1;
+        }
+
+        transitions[make_pair(from, symbol)].insert(to);
+    }
+
+    vector<set<string>> newStates;
+    map<set<string>, int> stateNumbers;
+
+    set<string> initialState;
+    initialState.insert(startState);
+
+    newStates.push_back(initialState);
+    stateNumbers[initialState] = 0;
+
+    vector<tuple<int, string, int>> newTransitions;
+
+    for (int i = 0; i < (int)newStates.size(); i++) {
+        set<string> currentState = newStates[i];
+
+        for (const string &currentSymbol : alphabet) {
+            set<string> destination;
+
+            for (const string &state : currentState) {
+                auto it = transitions.find(
+                    make_pair(state, currentSymbol)
+                );
+
+                if (it != transitions.end()) {
+                    destination.insert(
+                        it->second.begin(),
+                        it->second.end()
+                    );
                 }
             }
 
-            if (!next_set.empty()) {
-                int target_idx;
-                auto map_it = subset_map.find(next_set);
-                if (map_it == subset_map.end()) {
-                    target_idx = static_cast<int>(dfa_subsets.size());
-                    dfa_subsets.push_back(next_set);
-                    subset_map[next_set] = target_idx;
-                    worklist.push(target_idx);
-                } else {
-                    target_idx = map_it->second;
-                }
-
-                dfa_transitions.push_back({current_idx, sym, target_idx});
+            if (destination.empty()) {
+                continue;
             }
+
+            if (stateNumbers.find(destination) == stateNumbers.end()) {
+                int number = (int)newStates.size();
+
+                newStates.push_back(destination);
+                stateNumbers[destination] = number;
+            }
+
+            int destinationNumber = stateNumbers[destination];
+
+            newTransitions.push_back(
+                make_tuple(i, currentSymbol, destinationNumber)
+            );
         }
     }
 
-    sort(dfa_transitions.begin(), dfa_transitions.end());
+    sort(newTransitions.begin(), newTransitions.end());
 
     ofstream outputFile(outputFilename);
+
     if (!outputFile) {
-        cerr << "Hiba a kimeneti fajl megnyitasakor: " << outputFilename << endl;
+        cerr << "Error opening output file: " << outputFilename << endl;
         return 1;
     }
 
-    for (size_t i = 0; i < dfa_subsets.size(); ++i) {
-        outputFile << "s" << i << (i + 1 < dfa_subsets.size() ? " " : "");
+    for (int i = 0; i < (int)newStates.size(); i++) {
+        if (i > 0) {
+            outputFile << " ";
+        }
+
+        outputFile << "s" << i;
     }
-    outputFile << "\n";
 
-    for (size_t i = 0; i < alphabet.size(); ++i) {
-        outputFile << alphabet[i] << (i + 1 < alphabet.size() ? " " : "");
+    outputFile << endl;
+
+    for (int i = 0; i < (int)alphabet.size(); i++) {
+        if (i > 0) {
+            outputFile << " ";
+        }
+
+        outputFile << alphabet[i];
     }
-    outputFile << "\n";
 
-    outputFile << "s0\n";
+    outputFile << endl;
+    outputFile << "s0" << endl;
 
-    vector<string> dfa_final_states;
-    for (size_t i = 0; i < dfa_subsets.size(); ++i) {
-        bool is_final = false;
-        for (const auto &state : dfa_subsets[i]) {
-            if (nfa_final_states.count(state) > 0) {
-                is_final = true;
+    bool first = true;
+
+    for (int i = 0; i < (int)newStates.size(); i++) {
+        bool isFinal = false;
+
+        for (const string &state : newStates[i]) {
+            if (finalStates.find(state) != finalStates.end()) {
+                isFinal = true;
                 break;
             }
         }
-        if (is_final) {
-            dfa_final_states.push_back("s" + to_string(i));
+
+        if (isFinal) {
+            if (!first) {
+                outputFile << " ";
+            }
+
+            outputFile << "s" << i;
+            first = false;
         }
     }
 
-    for (size_t i = 0; i < dfa_final_states.size(); ++i) {
-        outputFile << dfa_final_states[i] << (i + 1 < dfa_final_states.size() ? " " : "");
-    }
-    outputFile << "\n";
+    outputFile << endl;
 
-    for (const auto &tr : dfa_transitions) {
-        outputFile << "s" << tr.from << " " << tr.symbol << " s" << tr.to << "\n";
+    for (const auto &transition : newTransitions) {
+        outputFile << "s" << get<0>(transition) << " "
+                   << get<1>(transition) << " "
+                   << "s" << get<2>(transition) << endl;
     }
 
     return 0;
