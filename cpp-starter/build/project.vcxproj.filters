@@ -10,6 +10,9 @@
     <ClCompile Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\problems\dfa.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\problems\determinize.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\CMakeLists.txt" />

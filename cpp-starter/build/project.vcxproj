@@ -367,6 +367,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\main.cpp" />
     <ClCompile Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\problems\sum.cpp" />
     <ClCompile Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\problems\dfa.cpp" />
+    <ClCompile Include="C:\Users\Orsi\Sapi\3ev\Formalis_nyelvek\FormalisNyelvek\cpp-starter\problems\determinize.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
