@@ -57,17 +57,15 @@ int RegexProblem::run(const cxxopts::ParseResult &args) {
         int c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0;
         int c6 = 0, c7 = 0, c8 = 0, c9 = 0, c10 = 0;
 
-        std::regex regDate15(R"(^10-15)");
-        std::regex regExactTime(R"(^10-15\s+10:18:51)");
-        std::regex reg51Sec(R"(^\d{2}-\d{2}\s+\d{2}:\d{2}:51\b)");
-        std::regex regLowMemory(R"(\blowmemorykiller\b)", std::regex::icase);
-        std::regex regExactPid(R"(^\d{2}-\d{2}\s+10:18:51(?:\.\d+)?\s+221\b)");
-        std::regex regLevelE(R"(\s+E\s+)");
-        std::regex regPkgW(R"(\s+W\s+PackageManager\s*:)");
-        std::regex regExoD(R"(\s+D\s+.*ExoPlayer.*:)");
-        std::regex regEW(R"(\s+[EW]\s+)");
-        std::regex regJavaPos(R"(\.java:)");
-        std::regex regThreadWord(R"(\bThread\b)");
+        std::regex reg1(R"(^10-15)");
+        std::regex reg2(R"(^10-15\s+10:18:51)");
+        std::regex reg3(R"(:\d{2}:51(?:\.|\s|$))");
+        std::regex reg4(R"(\blowmemorykiller\b)", std::regex::icase);
+        std::regex reg5(R"(10:18:51(?:\.\d+)?\s+221\b)");
+        std::regex reg6(R"(\s+E\s+)");
+        std::regex reg7(R"(\s+W\s+PackageManager\b)");
+        std::regex reg8(R"(\s+D\s+.*ExoPlayer)");
+        std::regex reg9(R"(\s+[EW]\s+.*\.java:)");
 
         for (const auto &l : lines) {
             std::smatch match;
@@ -75,39 +73,37 @@ int RegexProblem::run(const cxxopts::ParseResult &args) {
 
             std::string dateTime = isLogcat ? match[1].str() : "";
             std::string pid      = isLogcat ? match[2].str() : "";
-            std::string tid      = isLogcat ? match[3].str() : "";
             std::string level    = isLogcat ? match[4].str() : "";
             std::string tag      = isLogcat ? match[5].str() : "";
             std::string msg      = isLogcat ? match[6].str() : "";
 
-            if (std::regex_search(l, regDate15)) c1++;
+            if (std::regex_search(l, reg1)) c1++;
 
-            if (std::regex_search(l, regExactTime)) c2++;
+            if (std::regex_search(l, reg2)) c2++;
 
-            if (std::regex_search(l, reg51Sec)) c3++;
+            if (std::regex_search(l, reg3)) c3++;
 
-            if ((isLogcat && tag == "lowmemorykiller") || std::regex_search(l, regLowMemory)) c4++;
+            if ((isLogcat && tag == "lowmemorykiller") || std::regex_search(l, reg4)) c4++;
 
-            if (std::regex_search(l, regExactPid) || (dateTime.find("10:18:51") != std::string::npos && pid == "221")) c5++;
+            if ((dateTime.find("10:18:51") != std::string::npos && pid == "221") || std::regex_search(l, reg5)) c5++;
 
-            if ((isLogcat && level == "E") || std::regex_search(l, regLevelE)) c6++;
+            if ((isLogcat && level == "E") || std::regex_search(l, reg6)) c6++;
 
-            if ((isLogcat && level == "W" && tag == "PackageManager") || std::regex_search(l, regPkgW)) c7++;
+            if ((isLogcat && level == "W" && tag == "PackageManager") || std::regex_search(l, reg7)) c7++;
 
-            if ((isLogcat && level == "D" && tag.find("ExoPlayer") != std::string::npos) || std::regex_search(l, regExoD)) c8++;
+            if ((isLogcat && level == "D" && tag.find("ExoPlayer") != std::string::npos) || std::regex_search(l, reg8)) c8++;
 
-            bool isEW = (isLogcat && (level == "E" || level == "W")) || std::regex_search(l, regEW);
-            if (isEW && std::regex_search(l, regJavaPos)) c9++;
+            bool isEW = (isLogcat && (level == "E" || level == "W")) || std::regex_search(l, reg6) || std::regex_search(l, std::regex(R"(\s+W\s+)"));
+            if ((isEW && l.find(".java:") != std::string::npos) || std::regex_search(l, reg9)) c9++;
 
-            std::string msgPart = isLogcat ? msg : (l.find(':') != std::string::npos ? l.substr(l.find(':') + 1) : "");
-            if (std::regex_search(msgPart, regThreadWord)) c10++;
+            std::string messagePart = isLogcat ? msg : (l.find(':') != std::string::npos ? l.substr(l.find(':') + 1) : "");
+            if (messagePart.find("Thread") != std::string::npos) c10++;
         }
 
         outputFile << c1 << "\n" << c2 << "\n" << c3 << "\n" << c4 << "\n" << c5 << "\n";
         outputFile << c6 << "\n" << c7 << "\n" << c8 << "\n" << c9 << "\n" << c10 << "\n";
 
     } else if (taskNum == 2) {
-        // 2. feladat
         std::regex javaFileRegex(R"(([A-Za-z0-9_$-]+\.java))");
         bool inErrorContext = false;
 
@@ -127,7 +123,6 @@ int RegexProblem::run(const cxxopts::ParseResult &args) {
                     inErrorContext = false;
                 }
             } else if (inErrorContext) {
-                // Stack trace sora (nincs logcat fejléc)
                 auto begin = std::sregex_iterator(l.begin(), l.end(), javaFileRegex);
                 auto end = std::sregex_iterator();
                 for (std::sregex_iterator i = begin; i != end; ++i) {
@@ -137,7 +132,6 @@ int RegexProblem::run(const cxxopts::ParseResult &args) {
         }
 
     } else if (taskNum == 3) {
-        // 3. feladat
         std::vector<std::string> uniquePids;
         std::unordered_set<std::string> seenPids;
 
@@ -157,7 +151,6 @@ int RegexProblem::run(const cxxopts::ParseResult &args) {
         }
 
     } else if (taskNum == 4) {
-        // 4. feladat
         std::map<std::string, int> errorCounts;
 
         for (const auto &l : lines) {
@@ -185,7 +178,6 @@ int RegexProblem::run(const cxxopts::ParseResult &args) {
         }
 
     } else if (taskNum == 5) {
-        // 5. feladat
         int mainThreadErrors = 0;
 
         for (const auto &l : lines) {
