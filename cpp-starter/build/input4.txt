@@ -1,0 +1,7 @@
+10-15 10:18:51.254 221 221 E PackageManager: Error creating user at (User.java:123)
+10-15 10:18:51.255 601 601 E InputManager-JNI: at java.util.HashMap.putMapEntries (HashMap.java:500)
+10-15 10:18:51.300 601 602 W PackageManager: Low disk space detected
+10-15 10:19:00.100 100 100 D ExoPlayer: Initializing player instance
+10-15 12:00:51.000 500 500 I lowmemorykiller: Killing process 500
+10-15 10:18:51.500 221 221 E SystemServer: Thread crash in main loop
+10-16 11:20:10.123 300 300 W ActivityManager: Slow delivery of broadcast
